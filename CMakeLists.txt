@@ -31,6 +31,7 @@ add_compile_definitions(DEV_ERROR_DETECT)
 add_compile_options(-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft)
 add_link_options(-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft)
 add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
+add_compile_definitions(ENABLE_DEBUG)
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 # uncomment to mitigate c++17 absolute addresses warnings
@@ -84,7 +85,7 @@ file(GLOB SOURCES
         ${SDK}/platform/drivers/src/power/YTM32Z1x/power_manager_YTM32Z1x.c
         )
     include_directories(
-		src
+		src/include
     )
     file(GLOB APP_SOURCES
 		src/*.c
