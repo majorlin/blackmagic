@@ -19,36 +19,17 @@
 #include "general.h"
 #include "morse.h"
 
-#include <libopencm3/cm3/systick.h>
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/stm32/rcc.h>
-
+// #include <libopencm3/cm3/systick.h>
+// #include <libopencm3/cm3/nvic.h>
+// #include <libopencm3/stm32/rcc.h>
+#include "sdk_project_config.h"
 uint8_t running_status;
 static volatile uint32_t time_ms;
 uint32_t swd_delay_cnt = 0;
 
 static int morse_tick;
 
-void platform_timing_init(void)
-{
-	/* Setup heartbeat timer */
-	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8);
-	/* Interrupt us at 10 Hz */
-	systick_set_reload(rcc_ahb_frequency / (8 * SYSTICKHZ) );
-	/* SYSTICK_IRQ with low priority */
-	nvic_set_priority(NVIC_SYSTICK_IRQ, 14 << 4);
-	systick_interrupt_enable();
-	systick_counter_enable();
-}
-
-void platform_delay(uint32_t ms)
-{
-	platform_timeout timeout;
-	platform_timeout_set(&timeout, ms);
-	while (!platform_timeout_is_expired(&timeout));
-}
-
-void sys_tick_handler(void)
+void lptmr_tick_handler(void)
 {
 	time_ms += SYSTICKMS;
 
@@ -61,6 +42,20 @@ void sys_tick_handler(void)
 		morse_tick++;
 	}
 }
+void platform_timing_init(void)
+{
+	INT_SYS_InstallHandler(lpTMR0_IRQn, lptmr_tick_handler, NULL);
+	INT_SYS_SetPriority(lpTMR0_IRQn, 3);
+	lpTMR_DRV_Init(0, &lptmrConfig, true);
+}
+
+void platform_delay(uint32_t ms)
+{
+	platform_timeout timeout;
+	platform_timeout_set(&timeout, ms);
+	while (!platform_timeout_is_expired(&timeout));
+}
+
 
 uint32_t platform_time_ms(void)
 {

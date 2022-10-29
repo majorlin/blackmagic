@@ -50,6 +50,15 @@
 #define GPIO29             29
 #define GPIO30             30
 #define GPIO31             31
+
+#define gpio_set_val 	 PINS_DRV_WritePin
+#define gpio_set(base, pin)         PINS_DRV_SetPins(base, 1 << pin)
+#define gpio_clear(base, pin)       PINS_DRV_ClearPins(base, 1 << pin)
+#define gpio_toggle(base, pin)      PINS_DRV_TogglePins(base, 1 << pin)
+#define gpio_port_write(base, val)  PINS_DRV_WritePins(base, val)
+#define gpio_get(base, pin)       	((PINS_DRV_ReadPins(base) & (1 << pin)) >> pin)
+#define rcc_ahb_frequency		    48000000
+
 #endif /* _YUNTU_INTERFACE_H_ */
 
 /*******************************************************************************

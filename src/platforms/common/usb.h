@@ -21,6 +21,8 @@
 #ifndef PLATFORMS_COMMON_USB_H
 #define PLATFORMS_COMMON_USB_H
 
+#ifndef CPU_YTM32B1LE0
+
 #include <stdint.h>
 #include <libopencm3/usb/usbd.h>
 
@@ -47,5 +49,5 @@ void blackmagic_usb_init(void);
 
 /* Returns current usb configuration, or 0 if not configured. */
 uint16_t usb_get_config(void);
-
+#endif /* CPU_YTM32B1LE0 */
 #endif /* PLATFORMS_COMMON_USB_H */

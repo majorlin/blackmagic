@@ -22,7 +22,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
 # for use printf & scanf with float
-set(COMMON_FLAGS "-specs=nosys.specs -specs=nano.specs")
+set(COMMON_FLAGS "-specs=nano.specs -specs=rdimon.specs -u _printf_float -u _scanf_float")
 
 #Uncomment for hardware floating point
 add_compile_definitions(CPU_${CHIP})
@@ -34,6 +34,7 @@ add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-le
 add_compile_definitions(ENABLE_DEBUG)
 add_compile_definitions(NO_LIBOPENCM3)
 add_compile_definitions(PC_HOSTED=0)
+add_compile_definitions(CDCACM_PACKET_SIZE=512)
 add_compile_options(-Werror=format=2)
 # uncomment to mitigate c++17 absolute addresses warnings
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
@@ -89,6 +90,7 @@ file(GLOB SOURCES
 		    src/include
             src/platforms/common
             src/platforms/yuntu
+            src/platforms/yuntu/board
             src/target
     )
     file(GLOB APP_SOURCES
@@ -97,6 +99,7 @@ file(GLOB SOURCES
             src/platforms/common/swdptap.c
             src/platforms/common/jtagtap.c
             src/platforms/yuntu/*.c
+            src/platforms/yuntu/board/*.c
         )
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/${SDK}/platform/devices/${CHIP}/linker/gcc/flash.ld)

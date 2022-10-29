@@ -189,31 +189,20 @@ extern bool debug_bmp;
 #define AUX_BTN2       GPIO9
 #define AUX_VBAT       GPIO0
 
-#define SWD_CR       GPIO_CRL(SWDIO_PORT)
-#define SWD_CR_SHIFT (4U << 2U)
 
 #define TMS_SET_MODE()                                                                       \
 	do {                                                                                     \
 		gpio_set(TMS_DIR_PORT, TMS_DIR_PIN);                                                 \
-		gpio_set_mode(TMS_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, TMS_PIN); \
 	} while (0)
 
 #define SWDIO_MODE_FLOAT()                        \
 	do {                                          \
-		uint32_t cr = SWD_CR;                     \
-		cr &= ~(0xfU << SWD_CR_SHIFT);            \
-		cr |= (0x4U << SWD_CR_SHIFT);             \
-		GPIO_BRR(SWDIO_DIR_PORT) = SWDIO_DIR_PIN; \
-		SWD_CR = cr;                              \
+    	PINS_DRV_SetPinDirection(SWDIO_PORT, SWDIO_PIN, GPIO_INPUT_DIRECTION);                                             \
 	} while (0)
 
 #define SWDIO_MODE_DRIVE()                         \
 	do {                                           \
-		uint32_t cr = SWD_CR;                      \
-		cr &= ~(0xfU << SWD_CR_SHIFT);             \
-		cr |= (0x1U << SWD_CR_SHIFT);              \
-		GPIO_BSRR(SWDIO_DIR_PORT) = SWDIO_DIR_PIN; \
-		SWD_CR = cr;                               \
+    	PINS_DRV_SetPinDirection(SWDIO_PORT, SWDIO_PIN, GPIO_OUTPUT_DIRECTION);                                             \
 	} while (0)
 
 #define UART_PIN_SETUP()                                                                                        \

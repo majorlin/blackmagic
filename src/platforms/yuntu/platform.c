@@ -24,18 +24,18 @@
 
 #include "general.h"
 #include "usb.h"
-#include "aux_serial.h"
+//#include "aux_serial.h"
 #include "morse.h"
 
-#include <libopencm3/stm32/rcc.h>
-#include <libopencm3/cm3/scb.h>
-#include <libopencm3/cm3/scs.h>
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/stm32/exti.h>
-#include <libopencm3/stm32/usart.h>
-#include <libopencm3/usb/usbd.h>
-#include <libopencm3/stm32/adc.h>
-#include <libopencm3/stm32/flash.h>
+// #include <libopencm3/stm32/rcc.h>
+// #include <libopencm3/cm3/scb.h>
+// #include <libopencm3/cm3/scs.h>
+// #include <libopencm3/cm3/nvic.h>
+// #include <libopencm3/stm32/exti.h>
+// #include <libopencm3/stm32/usart.h>
+// #include <libopencm3/usb/usbd.h>
+// #include <libopencm3/stm32/adc.h>
+// #include <libopencm3/stm32/flash.h>
 
 static void adc_init(void);
 static void setup_vbus_irq(void);
@@ -74,86 +74,14 @@ static void setup_vbus_irq(void);
  */
 int platform_hwversion(void)
 {
-	static int hwversion = -1;
-	uint16_t hwversion_pins = GPIO7 | GPIO6 | GPIO5;
-	uint16_t unused_pins = hwversion_pins ^ 0xFFFF;
-
-	/* Check if the hwversion is set in the user option byte. */
-	if (hwversion == -1) {
-		if ((BMP_HWVERSION_BYTE != 0xFFFF) &&
-		    (BMP_HWVERSION_BYTE != 0x00FF)) {
-			/* Check if the data is valid.
-			 * When valid it should only have values 4 and higher.
-			 */
-			if (((BMP_HWVERSION_BYTE >> 8) !=
-			     (~BMP_HWVERSION_BYTE & 0xFF)) ||
-			    ((BMP_HWVERSION_BYTE & 0xFF) < 4)) {
-				return -2;
-			} else {
-				hwversion = BMP_HWVERSION_BYTE & 0xFF;
-			}
-		}
-	}
-
-	/* If the hwversion is not set in option bytes check
-	 * the hw pin strapping.
-	 */
-	if (hwversion == -1) {
-		/* Configure the hardware version pins as input pull-up/down */
-		gpio_set_mode(GPIOB, GPIO_MODE_INPUT,
-				GPIO_CNF_INPUT_PULL_UPDOWN,
-				hwversion_pins);
-
-		/* Enable the weak pull up. */
-		gpio_set(GPIOB, hwversion_pins);
-
-		/* Wait a little to make sure the pull up is in effect... */
-		for(int i = 0; i < 100; i++) __asm__("nop");
-
-		/* Get all pins that are pulled low in hardware.
-		 * This also sets all the "unused" pins to 1.
-		 */
-		uint16_t pins_negative = gpio_get(GPIOB, hwversion_pins) | unused_pins;
-
-		/* Enable the weak pull down. */
-		gpio_clear(GPIOB, hwversion_pins);
-
-		/* Wait a little to make sure the pull down is in effect... */
-		for(int i = 0; i < 100; i++) __asm__("nop");
-
-		/* Get all the pins that are pulled high in hardware. */
-		uint16_t pins_positive = gpio_get(GPIOB, hwversion_pins);
-
-		/* Hardware version is the id defined by the pins that are
-		 * asserted low or high by the hardware. This means that pins
-		 * that are left floating are 0 and those that are either
-		 * pulled high or low are 1.
-		 */
-		hwversion = (((pins_positive ^ pins_negative) ^ 0xFFFF) & hwversion_pins) >> 5;
-	}
-
-	return hwversion;
+	return 6;
 }
 
 void platform_init(void)
 {
-	SCS_DEMCR |= SCS_DEMCR_VC_MON_EN;
-
-	rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
-
-	/* Enable peripherals */
-	rcc_periph_clock_enable(RCC_USB);
-	rcc_periph_clock_enable(RCC_GPIOA);
-	rcc_periph_clock_enable(RCC_GPIOB);
-	if (platform_hwversion() >= 6)
-		rcc_periph_clock_enable(RCC_GPIOC);
-	rcc_periph_clock_enable(RCC_AFIO);
-	rcc_periph_clock_enable(RCC_CRC);
-
+#if 0
 	/* Setup GPIO ports */
 	gpio_clear(USB_PU_PORT, USB_PU_PIN);
-	gpio_set_mode(USB_PU_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, USB_PU_PIN);
-
 	gpio_set_mode(JTAG_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, TMS_DIR_PIN | TCK_PIN | TDI_PIN);
 	gpio_set_mode(JTAG_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_INPUT_FLOAT, TMS_PIN);
 
@@ -201,25 +129,13 @@ void platform_init(void)
 		gpio_set_mode(PWR_BR_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, PWR_BR_PIN);
 	}
 
-	if (platform_hwversion() > 0)
-		adc_init();
-	else {
-		gpio_clear(GPIOB, GPIO0);
-		gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO0);
-	}
-	/* Relocate interrupt vector table here */
-	extern int vector_table;
-	SCB_VTOR = (uint32_t)&vector_table;
+#endif
+	adc_init();
 
 	platform_timing_init();
-	blackmagic_usb_init();
 
 	/* On hardware version 1 and 2, UART and SWD share connector pins.
 	 * Don't enable UART if we're being debugged. */
-	if (platform_hwversion() == 0 || platform_hwversion() >= 3 || !(SCS_DEMCR & SCS_DEMCR_TRCENA))
-		aux_serial_init();
-
-	setup_vbus_irq();
 }
 
 void platform_nrst_set_val(bool assert)
@@ -264,6 +180,7 @@ void platform_target_set_power(const bool power)
 
 static void adc_init(void)
 {
+#if 0
 	rcc_periph_clock_enable(RCC_ADC1);
 
 	gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
@@ -283,10 +200,12 @@ static void adc_init(void)
 
 	adc_reset_calibration(ADC1);
 	adc_calibrate(ADC1);
+#endif
 }
 
 uint32_t platform_target_voltage_sense(void)
 {
+#if 0
 	/* returns the voltage in volt scaled by 10 (so 33 means 3.3V), except
 	 * for hardware version 1
 	 * this function is only needed for implementations that allow the
@@ -307,6 +226,7 @@ uint32_t platform_target_voltage_sense(void)
 	/* Clear EOC bit. The GD32F103 does not automatically reset it on ADC read. */
 	ADC_SR(ADC1) &= ~ADC_SR_EOC;
 	return (val * 99) / 8191;
+#endif
 }
 
 const char *platform_target_voltage(void)
@@ -324,80 +244,10 @@ const char *platform_target_voltage(void)
 
 void platform_request_boot(void)
 {
-	/* Disconnect USB cable */
-	gpio_set_mode(USB_PU_PORT, GPIO_MODE_INPUT, 0, USB_PU_PIN);
-
-	/* Drive boot request pin */
-	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO12);
 	gpio_clear(GPIOB, GPIO12);
 }
 
 void platform_target_clk_output_enable(bool enable)
 {
-	if (platform_hwversion() >= 6) {
-		/* If we're switching to tristate mode, first convert the processor pin to an input */
-		if (!enable)
-			gpio_set_mode(TCK_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, TCK_PIN);
-		/* Reconfigure the logic levelt translator */
-		gpio_set_val(TCK_DIR_PORT, TCK_DIR_PIN, enable);
-		/* If we're switching back out of tristate mode, we're now safe to make the processor pin an output again */
-		if (enable)
-			gpio_set_mode(TCK_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, TCK_PIN);
-	}
 }
 
-void exti15_10_isr(void)
-{
-	uint32_t usb_vbus_port;
-	uint16_t usb_vbus_pin;
-
-	if (platform_hwversion() < 5) {
-		usb_vbus_port = USB_VBUS_PORT;
-		usb_vbus_pin = USB_VBUS_PIN;
-	} else {
-		usb_vbus_port = USB_VBUS5_PORT;
-		usb_vbus_pin = USB_VBUS5_PIN;
-	}
-
-	if (gpio_get(usb_vbus_port, usb_vbus_pin)) {
-		/* Drive pull-up high if VBUS connected */
-		gpio_set_mode(USB_PU_PORT, GPIO_MODE_OUTPUT_10_MHZ,
-				GPIO_CNF_OUTPUT_PUSHPULL, USB_PU_PIN);
-	} else {
-		/* Allow pull-up to float if VBUS disconnected */
-		gpio_set_mode(USB_PU_PORT, GPIO_MODE_INPUT,
-				GPIO_CNF_INPUT_FLOAT, USB_PU_PIN);
-	}
-
-	exti_reset_request(usb_vbus_pin);
-}
-
-static void setup_vbus_irq(void)
-{
-	uint32_t usb_vbus_port;
-	uint16_t usb_vbus_pin;
-
-	if (platform_hwversion() < 5) {
-		usb_vbus_port = USB_VBUS_PORT;
-		usb_vbus_pin = USB_VBUS_PIN;
-	} else {
-		usb_vbus_port = USB_VBUS5_PORT;
-		usb_vbus_pin = USB_VBUS5_PIN;
-	}
-
-	nvic_set_priority(USB_VBUS_IRQ, IRQ_PRI_USB_VBUS);
-	nvic_enable_irq(USB_VBUS_IRQ);
-
-	gpio_set(usb_vbus_port, usb_vbus_pin);
-	gpio_set(USB_PU_PORT, USB_PU_PIN);
-
-	gpio_set_mode(usb_vbus_port, GPIO_MODE_INPUT,
-			GPIO_CNF_INPUT_PULL_UPDOWN, usb_vbus_pin);
-
-	/* Configure EXTI for USB VBUS monitor */
-	exti_select_source(usb_vbus_pin, usb_vbus_port);
-	exti_set_trigger(usb_vbus_pin, EXTI_TRIGGER_BOTH);
-	exti_enable_request(usb_vbus_pin);
-
-	exti15_10_isr();
-}
