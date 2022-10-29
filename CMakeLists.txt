@@ -53,10 +53,6 @@ else ()
     add_compile_options(-Og -g)
 endif ()
 
-if(${MODULE} STREQUAL "CoreMark")
-    add_compile_options(-DITERATIONS=1000)
-endif ()
-
 add_compile_options(-Os -flto -g)
 include_directories(
         ${SDK}/CMSIS/Core/Include

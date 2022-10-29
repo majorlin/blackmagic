@@ -20,4 +20,6 @@ blackmagic_upgrade
 .vscode
 .gdb_history
 src/artifacts/
-
+.idea/
+SDK
+cmake-build-debug/
