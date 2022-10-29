@@ -28,7 +28,7 @@
 #include "platform.h"
 #include "gdb_packet.h"
 #include "target.h"
-#include "target/target_internal.h"
+#include "target_internal.h"
 #include "rtt.h"
 #include "rtt_if.h"
 

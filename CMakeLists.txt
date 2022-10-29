@@ -32,8 +32,9 @@ add_compile_options(-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft)
 add_link_options(-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft)
 add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
 add_compile_definitions(ENABLE_DEBUG)
-add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-
+add_compile_definitions(NO_LIBOPENCM3)
+add_compile_definitions(PC_HOSTED=0)
+add_compile_options(-Werror=format=2)
 # uncomment to mitigate c++17 absolute addresses warnings
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
 
@@ -85,10 +86,17 @@ file(GLOB SOURCES
         ${SDK}/platform/drivers/src/power/YTM32Z1x/power_manager_YTM32Z1x.c
         )
     include_directories(
-		src/include
+		    src/include
+            src/platforms/common
+            src/platforms/yuntu
+            src/target
     )
     file(GLOB APP_SOURCES
-		src/*.c
+		    src/*.c
+            src/target/*.c
+            src/platforms/common/swdptap.c
+            src/platforms/common/jtagtap.c
+            src/platforms/yuntu/*.c
         )
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/${SDK}/platform/devices/${CHIP}/linker/gcc/flash.ld)
